@@ -31,6 +31,7 @@ class StorageDevice extends Device {
   final String id;
   final DateTime modified;
   bool? isOnline;
+  bool? isShutdownAllowed;
 
   StorageDevice(
       {required this.id,
@@ -39,6 +40,7 @@ class StorageDevice extends Device {
       required macAddress,
       wolPort,
       this.isOnline,
+      this.isShutdownAllowed,
       required this.modified,
       deviceType})
       : super(
@@ -63,6 +65,7 @@ class StorageDevice extends Device {
     DateTime? modified,
     String? deviceType,
     bool? isOnline,
+    bool? isShutdownAllowed,
   }) {
     return StorageDevice(
       id: id ?? this.id,
@@ -73,6 +76,7 @@ class StorageDevice extends Device {
       modified: modified ?? this.modified,
       deviceType: deviceType ?? this.deviceType,
       isOnline: isOnline ?? this.isOnline,
+      isShutdownAllowed: isShutdownAllowed ?? this.isShutdownAllowed,
     );
   }
 

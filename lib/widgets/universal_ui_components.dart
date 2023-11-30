@@ -72,6 +72,77 @@ Widget customDualChoiceAlertdialog(
   );
 }
 
+Widget customThreeChoiceAlertdialog(
+    {String? title,
+      Widget? child,
+      IconData? icon,
+      Color? iconColor,
+      String? leftText,
+      String? centerText,
+      String? rightText,
+      Color? leftColor,
+      Color? centerColor,
+      Color? rightColor,
+      IconData? leftIcon,
+      IconData? centerIcon,
+      IconData? rightIcon,
+      Function()? leftOnPressed,
+      Function()? centerOnPressed,
+      Function()? rightOnPressed}) {
+  return customAlertDialog(
+    title: title,
+    child: child,
+    icon: icon,
+    iconColor: iconColor,
+    actions: (leftIcon != null ||
+        rightIcon != null ||
+        leftText != null ||
+        rightText != null)
+        ? [
+      TextButton(
+        onPressed: leftOnPressed,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (leftIcon != null) Icon(leftIcon),
+            const SizedBox(width: 5),
+            if (leftText != null)
+              Text(leftText, style: TextStyle(color: leftColor)),
+          ],
+        ),
+      ),
+      TextButton(
+        onPressed: centerOnPressed,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (centerIcon != null) Icon(centerIcon),
+            const SizedBox(width: 5),
+            if (centerText != null)
+              Text(centerText, style: TextStyle(color: leftColor)),
+          ],
+        ),
+      ),
+      TextButton(
+        onPressed: rightOnPressed,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (rightIcon != null) Icon(rightIcon),
+            const SizedBox(width: 5),
+            if (rightText != null)
+              Text(
+                rightText,
+                style: TextStyle(color: rightColor),
+              ),
+          ],
+        ),
+      ),
+    ]
+        : null,
+  );
+}
+
 Widget customAlertDialog(
     {String? title,
     Widget? child,

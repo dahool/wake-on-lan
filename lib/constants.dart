@@ -12,6 +12,7 @@ class AppConstants {
   /// HomePage Elements
   static const wakeUp = Icons.power_settings_new_outlined;
   static const edit = Icons.mode_edit_outline_outlined;
+  static const shutdown = Icons.mode_standby;
   static const macText = 'MAC';
   static const ipText = 'IP';
   static const add = Icon(Icons.add);
@@ -20,6 +21,8 @@ class AppConstants {
   // Home Ping Timeouts and Intervals for scanning
   static const homePingTimeout = 1;
   static const homePingInterval = 12;
+
+  static const shutdownServicePort = 50001;
 
   // Wake Up Dialog Elements
   static const errorMessageColor = Colors.red;

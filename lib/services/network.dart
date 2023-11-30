@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:dart_ping/dart_ping.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,30 @@ import 'dart:io';
 import 'package:wake_on_lan/wake_on_lan.dart';
 import 'data.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:http/http.dart' as http;
+
+Future<String> getMacAddress(ipAddress) async {
+  try {
+    final response = await http.get(Uri.parse('http://$ipAddress:${AppConstants.shutdownServicePort}/details'))
+        .timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          return http.Response('Timeout', 408);
+        });
+
+    debugPrint('Got response ${response.statusCode}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data.hardwareAddress;
+    }
+
+  } on Exception catch(e) {
+    debugPrint(e.toString());
+  }
+
+  return "";
+}
 
 Stream<NetworkDevice> findDevicesInNetwork(
   String networkPrefix,
@@ -34,7 +59,8 @@ Stream<NetworkDevice> findDevicesInNetwork(
         } on SocketException {
           host = "";
         }
-        controller.add(NetworkDevice(ipAddress: address, hostName: host));
+        String macAddress = await getMacAddress(address);
+        controller.add(NetworkDevice(ipAddress: address, hostName: host, macAddress: macAddress));
         break;
       }
     }
@@ -137,6 +163,8 @@ Stream<Message> sendWolPackage(
         type: MsgType.error);
   }
 
+  await Future.delayed(const Duration(seconds: 5));
+
   // ping device until it is online
   yield Message(text: homeWolCardPingInfo);
   bool online = false;
@@ -186,6 +214,69 @@ Stream<List<Message>> sendWolAndGetMessages(
   }
 }
 
+/// returns a list of Messages by using the sendWolPackage function
+/// accumulates the messages in a list and yields the list after each message
+Stream<List<Message>> sendShutdownAndGetMessages(
+    {required BuildContext context, required NetworkDevice device}) async* {
+  List<Message> messages = [];
+  await for (Message message
+  in sendShutdownRequest(context: context, device: device)) {
+    messages.add(message);
+    yield messages;
+  }
+}
+//yield Message(text: homeWolCardPingSuccess, type: MsgType.online);
+Stream<Message> sendShutdownRequest(
+    {required BuildContext context, required NetworkDevice device}) async* {
+
+  final ip = device.ipAddress;
+  bool invalid = false;
+
+  if (!IPv4Address.validate(ip)) {
+    yield Message(
+        text: AppLocalizations.of(context)!.homeWolCardIp(ip),
+        type: MsgType.error);
+    invalid = true;
+  }
+
+  if (invalid) {
+    yield Message(
+        text: AppLocalizations.of(context)!.homeWolCardInvalid,
+        type: MsgType.error);
+    return;
+  }
+
+  debugPrint('Sending request to $ip:${AppConstants.shutdownServicePort}');
+
+  yield Message(
+      text: AppLocalizations.of(context)!.homeShutdownProgress);
+
+  try {
+    final response = await http.get(Uri.parse('http://$ip:${AppConstants.shutdownServicePort}/shutdown'))
+        .timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          return http.Response('Timeout', 408);
+        });
+
+    debugPrint('Got response ${response.statusCode}');
+
+    if (response.statusCode == 200) {
+      yield Message(
+          text: AppLocalizations.of(context)!.homeShutdownSuccess,
+          type: MsgType.online);
+      return;
+    }
+  } on Exception catch(e) {
+    debugPrint(e.toString());
+  }
+
+  yield Message(
+      text: AppLocalizations.of(context)!.homeShutdownFailed,
+      type: MsgType.error);
+
+}
+
 /// ping a list of devices and return their status
 Future<bool> pingDevice({required String ipAddress}) async {
   final ping = Ping(ipAddress, count: 1, timeout: 3);
@@ -196,6 +287,28 @@ Future<bool> pingDevice({required String ipAddress}) async {
       return true;
     }
   }
+  return false;
+}
+
+/// discover if shutdown service is available
+Future<bool> checkShutdownService({required String ipAddress}) async {
+
+  try {
+    final response = await http.get(Uri.parse('http://$ipAddress:${AppConstants.shutdownServicePort}/status'))
+        .timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          return http.Response('Timeout', 408);
+        });
+
+    debugPrint('Got response ${response.statusCode}');
+
+    return true;
+
+  } on Exception catch(e) {
+    debugPrint(e.toString());
+  }
+
   return false;
 }
 

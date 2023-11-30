@@ -158,6 +158,12 @@ class _HomePageState extends State<HomePage> {
         device.isOnline = isOnline;
       });
     }
+    bool isShutdownAllowed = await checkShutdownService(ipAddress: device.ipAddress);
+    if (mounted) {
+      setState(() {
+        device.isShutdownAllowed = isShutdownAllowed;
+      });
+    }
   }
 
   @override
@@ -422,7 +428,7 @@ class _HomePageState extends State<HomePage> {
       required String title,
       required String subtitle1,
       required String subtitle2}) {
-    return customDualChoiceAlertdialog(
+    return customThreeChoiceAlertdialog(
         title: title != "" ? title : null,
         child: (subtitle1 != "" || subtitle2 != "" || device.isOnline != null)
             ? Column(
@@ -449,10 +455,13 @@ class _HomePageState extends State<HomePage> {
                 : Theme.of(context).colorScheme.error
             : null,
         leftText: AppLocalizations.of(context)!.homeDeviceCardWakeButton,
+        centerText: AppLocalizations.of(context)!.homeDeviceCardShutdownButton,
         rightText: AppLocalizations.of(context)!.homeDeviceCardEditButton,
         leftIcon: AppConstants.wakeUp,
+        centerIcon: AppConstants.shutdown,
         rightIcon: AppConstants.edit,
         leftOnPressed: () => {Navigator.pop(context), showWakeUpDialog(device)},
+        centerOnPressed: device.isShutdownAllowed == true ? () => {Navigator.pop(context), showShutdownDialog(device)} : null,
         rightOnPressed: () => {
               Navigator.of(context).pop(),
               showCustomBottomSheet(
@@ -533,4 +542,73 @@ class _HomePageState extends State<HomePage> {
               });
         });
   }
+
+  /// shows the Alert Dialog for shutting down the device.
+  /// [device] is the device to shutdown.
+  Future<dynamic> showShutdownDialog(StorageDevice device) {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return StreamBuilder<List<Message>>(
+              stream: sendShutdownAndGetMessages(
+                  context: context, device: device.toNetworkDevice()),
+              builder: (BuildContext context,
+                  AsyncSnapshot<List<Message>> snapshot) {
+                // set color, text and icon of dialog box according to the arrived messages
+                Color? color;
+                String rightText = AppLocalizations.of(context)!.cancel;
+                IconData? rightIcon = AppConstants.denyIcon;
+                if (snapshot.hasData &&
+                    snapshot.data!.last.type == MsgType.online) {
+                  color = AppConstants.successMessageColor;
+                  rightText = AppLocalizations.of(context)!.done;
+                  rightIcon = AppConstants.checkIcon;
+                }
+
+                if (snapshot.hasData &&
+                    snapshot.data!.last.type == MsgType.error) {
+                  color = Theme.of(context).colorScheme.error;
+                  rightText = AppLocalizations.of(context)!.ok;
+                  rightIcon = null;
+                }
+
+                return customDualChoiceAlertdialog(
+                  title: AppLocalizations.of(context)!.homeShutdownCardTitle,
+                  child: snapshot.hasData
+                      ? SizedBox(
+                    width: 200,
+                    child: ListView.separated(
+                      separatorBuilder: (context, index) =>
+                      const Divider(),
+                      shrinkWrap: true,
+                      itemCount: snapshot.data!.length,
+                      itemBuilder: (context, index) {
+                        final Message message = snapshot.data![index];
+                        return Text(
+                          message.text,
+                          style: TextStyle(
+                            color: (message.type == MsgType.error)
+                                ? Theme.of(context).colorScheme.error
+                                : (message.type == MsgType.check ||
+                                message.type == MsgType.online)
+                                ? AppConstants.successMessageColor
+                                : null,
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                      : const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                  icon: AppConstants.shutdown,
+                  iconColor: color,
+                  rightText: rightText,
+                  rightIcon: rightIcon,
+                  rightOnPressed: () => {Navigator.of(context).pop()},
+                );
+              });
+        });
+  }
 }
+

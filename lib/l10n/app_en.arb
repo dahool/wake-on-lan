@@ -1,7 +1,7 @@
 {
   "@PAGES": {},
-  "appTitle": "Simple WOL",
-  "homePageTitle": "Simple WOL",
+  "appTitle": "WOL",
+  "homePageTitle": "WOL",
   "homePageLabel": "Home",
   "settingsPageTitle": "Settings",
   "settingsPageLabel": "Settings",
@@ -24,10 +24,15 @@
   "homeDeviceListTitle": "Devices",
   "homeEditDeviceAlertTitle": "Edit Device",
   "homeDeviceCardWakeButton": "Wake Up",
+  "homeDeviceCardShutdownButton": "Power Off",
   "homeDeviceCardEditButton": "Edit",
   "homeDeviceCardOnline": "Device is online",
   "homeDeviceCardOffline": "Device is offline",
   "homeWolCardTitle": "Waking up...",
+  "homeShutdownCardTitle": "Power Off",
+  "homeShutdownProgress": "Sending power off request...",
+  "homeShutdownSuccess": "Power off request confirmed",
+  "homeShutdownFailed": "Power off service didn't respond",
   "homeWolCardIp": "'{ip}' is an invalid IPv4 address",
   "@homeWolCardIp": {
     "placeholders": {
