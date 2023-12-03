@@ -158,7 +158,10 @@ class _HomePageState extends State<HomePage> {
         device.isOnline = isOnline;
       });
     }
-    bool isShutdownAllowed = await checkShutdownService(ipAddress: device.ipAddress);
+    bool isShutdownAllowed = false;
+    if (isOnline) {
+      isShutdownAllowed = await checkShutdownService(ipAddress: device.ipAddress);
+    }
     if (mounted) {
       setState(() {
         device.isShutdownAllowed = isShutdownAllowed;
